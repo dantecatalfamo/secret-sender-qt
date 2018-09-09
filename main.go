@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"strings"
 
@@ -11,10 +10,7 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
-var (
-	txKP crypto.Keypair
-	rxKP crypto.Keypair
-)
+var rxKP crypto.Keypair
 
 func main() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
@@ -41,8 +37,6 @@ func main() {
 
 		rxKP.Generate()
 		rxKeyInput.SetText(rxKP.PublicString())
-		fmt.Println(rxKP.PublicString())
-
 	})
 
 	txKeyLabel := widgets.NewQLabel2("Recipiant Key:", nil, 0)
@@ -65,7 +59,7 @@ func main() {
 	cryptLayout.AddWidget(encryptButton, 0, 0)
 	cryptWidget.Layout().AddWidget(encryptButton)
 	encryptButton.ConnectClicked(func(bool) {
-		var tmpKP crypto.Keypair
+		var txKP, tmpKP crypto.Keypair
 		err := tmpKP.Generate()
 		if err != nil {
 			widgets.QMessageBox_Critical(nil, "No Public Key", "Please enter the recipient's public key", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
