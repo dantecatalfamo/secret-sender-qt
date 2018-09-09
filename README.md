@@ -1,4 +1,4 @@
 # secret-sender-qt
 Send secrets secretly
 
-[[https://github.com/dantecatalfamo/secret-sender-qt/blob/master/img/screenshot.png|alt=screenshot]]
+![screenshot](https://raw.githubusercontent.com/dantecatalfamo/secret-sender-qt/master/screenshot.png)
