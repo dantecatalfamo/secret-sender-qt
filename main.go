@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Shopify/ejson/crypto"
 	"github.com/therecipe/qt/widgets"
@@ -17,7 +20,7 @@ func main() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 
 	window := widgets.NewQMainWindow(nil, 0)
-	window.SetMinimumSize2(250, 200)
+	window.SetMinimumSize2(250, 300)
 	window.SetWindowTitle("Secret Sender")
 
 	mainWidget := widgets.NewQWidget(nil, 0)
@@ -61,10 +64,63 @@ func main() {
 	encryptButton := widgets.NewQPushButton2("Encrypt", nil)
 	cryptLayout.AddWidget(encryptButton, 0, 0)
 	cryptWidget.Layout().AddWidget(encryptButton)
+	encryptButton.ConnectClicked(func(bool) {
+		var tmpKP crypto.Keypair
+		err := tmpKP.Generate()
+		if err != nil {
+			widgets.QMessageBox_Critical(nil, "No Public Key", "Please enter the recipient's public key", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		keyStr := strings.TrimSpace(txKeyInput.Text())
+		if keyStr == "" {
+			widgets.QMessageBox_Warning(nil, "No Public Key", "Please enter the recipient's public key", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		keyHex, err := hex.DecodeString(keyStr)
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Key Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		for i, b := range keyHex {
+			txKP.Public[i] = b
+		}
+
+		encrypter := tmpKP.Encrypter(txKP.Public)
+		cypherText, err := encrypter.Encrypt([]byte(messageTextInput.ToPlainText()))
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Encryption Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		app.ProcessEvents(0)
+		messageTextInput.SetPlainText(string(cypherText))
+		app.ProcessEvents(0)
+	})
 
 	decryptButton := widgets.NewQPushButton2("Decrypt", nil)
 	cryptLayout.AddWidget(decryptButton, 0, 0)
 	cryptWidget.Layout().AddWidget(decryptButton)
+	decryptButton.ConnectClicked(func(bool) {
+		emptyBytes := make([]byte, 32)
+		if bytes.Equal(rxKP.Public[:], emptyBytes) {
+			widgets.QMessageBox_Warning(nil, "No Public Key", "Please generate a keypair to decrypt the message with", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		decrypter := rxKP.Decrypter()
+		decrypted, err := decrypter.Decrypt([]byte(messageTextInput.ToPlainText()))
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Error Decrpying", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		app.ProcessEvents(0)
+		messageTextInput.SetPlainText(string(decrypted))
+		app.ProcessEvents(0)
+	})
 
 	mainWidget.Layout().AddWidget(rxKeyLabel)
 	mainWidget.Layout().AddWidget(rxKeyInput)
@@ -74,12 +130,6 @@ func main() {
 	mainWidget.Layout().AddWidget(messageTextLabel)
 	mainWidget.Layout().AddWidget(messageTextInput)
 	mainWidget.Layout().AddWidget(cryptWidget)
-
-	// button := widgets.NewQPushButton2("Generate", nil)
-	// button.ConnectClicked(func(bool) {
-	// 	widgets.QMessageBox_Information(nil, "OK", input.Text(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-	// })
-	//mainWidget.Layout().AddWidget(button)
 
 	window.Show()
 
