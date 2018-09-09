@@ -16,7 +16,7 @@ func main() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 
 	window := widgets.NewQMainWindow(nil, 0)
-	window.SetMinimumSize2(520, 400)
+	window.SetMinimumSize2(250, 300)
 	window.SetWindowTitle("Secret Sender")
 
 	mainWidget := widgets.NewQWidget(nil, 0)
