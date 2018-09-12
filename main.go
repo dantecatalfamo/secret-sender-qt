@@ -58,6 +58,9 @@ func main() {
 			return
 		}
 		fileName := widgets.QFileDialog_GetSaveFileName(nil, "Save Keypair As", core.QDir_HomePath(), "SecretSenderKey (*.ssk)", "", 0)
+		if fileName == "" {
+			return
+		}
 		file, err := os.Create(fileName)
 		defer file.Close()
 		if err != nil {
@@ -81,6 +84,9 @@ func main() {
 	myKeyButtonWidget.Layout().AddWidget(myKeyLoadButton)
 	myKeyLoadButton.ConnectClicked(func(bool) {
 		fileName := widgets.QFileDialog_GetOpenFileName(nil, "Load Keypair", core.QDir_HomePath(), "SecretSenderKey (*.ssk)", "", 0)
+		if fileName == "" {
+			return
+		}
 		file, err := os.Open(fileName)
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
