@@ -12,7 +12,7 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
-var rxKP crypto.Keypair
+var myKP crypto.Keypair
 
 func main() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
@@ -37,11 +37,11 @@ func main() {
 		rxKeyInput.SetText("Generating...")
 		app.ProcessEvents(0)
 
-		rxKP.Generate()
-		rxKeyInput.SetText(rxKP.PublicString())
+		myKP.Generate()
+		rxKeyInput.SetText(myKP.PublicString())
 	})
 
-	txKeyLabel := widgets.NewQLabel2("Recipiant Key:", nil, 0)
+	txKeyLabel := widgets.NewQLabel2("Recipient Key:", nil, 0)
 	txKeyLabel.Font().SetPointSize(11)
 
 	txKeyInput := widgets.NewQLineEdit(nil)
@@ -69,7 +69,7 @@ func main() {
 		var txKP crypto.Keypair
 
 		emptyBytes := make([]byte, 32)
-		if bytes.Equal(rxKP.Public[:], emptyBytes) {
+		if bytes.Equal(myKP.Public[:], emptyBytes) {
 			widgets.QMessageBox_Warning(nil, "No Public Key", "Please generate a keypair before encrypting a message", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
@@ -90,7 +90,7 @@ func main() {
 			txKP.Public[i] = b
 		}
 
-		encrypter := rxKP.Encrypter(txKP.Public)
+		encrypter := myKP.Encrypter(txKP.Public)
 		cypherText, err := encrypter.Encrypt([]byte(messageTextInput.ToPlainText()))
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Encryption Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
@@ -107,12 +107,12 @@ func main() {
 	cryptWidget.Layout().AddWidget(decryptButton)
 	decryptButton.ConnectClicked(func(bool) {
 		emptyBytes := make([]byte, 32)
-		if bytes.Equal(rxKP.Public[:], emptyBytes) {
+		if bytes.Equal(myKP.Public[:], emptyBytes) {
 			widgets.QMessageBox_Warning(nil, "No Public Key", "Please generate a keypair to decrypt the message with", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
 
-		decrypter := rxKP.Decrypter()
+		decrypter := myKP.Decrypter()
 		decrypted, err := decrypter.Decrypt([]byte(messageTextInput.ToPlainText()))
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Error Decrpying", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
