@@ -5,10 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/Shopify/ejson/crypto"
+	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 )
 
@@ -32,13 +34,86 @@ func main() {
 	myKeyInput.SetPlaceholderText("Please generate a key")
 	myKeyInput.SetReadOnly(true)
 
+	myKeyButtonWidget := widgets.NewQWidget(nil, 0)
+	myKeyButtonLayout := widgets.NewQHBoxLayout()
+	myKeyButtonLayout.Layout().SetContentsMargins(0, 0, 0, 0)
+	myKeyButtonWidget.SetLayout(myKeyButtonLayout)
+
 	myKeyGenButton := widgets.NewQPushButton2("Generate", nil)
+	myKeyButtonWidget.Layout().AddWidget(myKeyGenButton)
 	myKeyGenButton.ConnectClicked(func(bool) {
 		myKeyInput.SetText("Generating...")
 		app.ProcessEvents(0)
 
 		myKP.Generate()
 		myKeyInput.SetText(myKP.PublicString())
+	})
+
+	myKeySaveButton := widgets.NewQPushButton2("Save", nil)
+	myKeyButtonWidget.Layout().AddWidget(myKeySaveButton)
+	myKeySaveButton.ConnectClicked(func(bool) {
+		fileName := widgets.QFileDialog_GetSaveFileName(nil, "Save Keypair As", core.QDir_HomePath(), "", "", 0)
+		file, err := os.Create(fileName)
+		defer file.Close()
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Save Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		pubString := base64.StdEncoding.EncodeToString(myKP.Public[:])
+		privString := base64.StdEncoding.EncodeToString(myKP.Private[:])
+		comboString := fmt.Sprintf("%s:%s", pubString, privString)
+		_, err = file.Write([]byte(comboString))
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Save Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		return
+	})
+
+	myKeyLoadButton := widgets.NewQPushButton2("Load", nil)
+	myKeyButtonWidget.Layout().AddWidget(myKeyLoadButton)
+	myKeyLoadButton.ConnectClicked(func(bool) {
+		fileName := widgets.QFileDialog_GetOpenFileName(nil, "Load Keypair", core.QDir_HomePath(), "", "", 0)
+		file, err := os.Open(fileName)
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		fileBytes, err := ioutil.ReadAll(file)
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		fileString := string(fileBytes)
+		pubPrivEncoded := strings.Split(fileString, ":")
+
+		pubKey, err := base64.StdEncoding.DecodeString(pubPrivEncoded[0])
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		privKey, err := base64.StdEncoding.DecodeString(pubPrivEncoded[1])
+		if err != nil {
+			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+
+		for i, b := range pubKey {
+			myKP.Public[i] = b
+		}
+
+		for i, b := range privKey {
+			myKP.Private[i] = b
+		}
+
+		app.ProcessEvents(0)
+		myKeyInput.SetText(myKP.PublicString())
+		app.ProcessEvents(0)
 	})
 
 	txKeyLabel := widgets.NewQLabel2("Recipient Key:", nil, 0)
@@ -80,13 +155,13 @@ func main() {
 			return
 		}
 
-		keyHex, err := hex.DecodeString(keyStr)
+		keyBytes, err := hex.DecodeString(keyStr)
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Key Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
 
-		for i, b := range keyHex {
+		for i, b := range keyBytes {
 			txKP.Public[i] = b
 		}
 
@@ -132,7 +207,8 @@ func main() {
 
 	mainWidget.Layout().AddWidget(myKeyLabel)
 	mainWidget.Layout().AddWidget(myKeyInput)
-	mainWidget.Layout().AddWidget(myKeyGenButton)
+	mainWidget.Layout().AddWidget(myKeyButtonWidget)
+	//mainWidget.Layout().AddWidget(myKeyGenButton)
 	mainWidget.Layout().AddWidget(txKeyLabel)
 	mainWidget.Layout().AddWidget(txKeyInput)
 	mainWidget.Layout().AddWidget(messageTextLabel)
