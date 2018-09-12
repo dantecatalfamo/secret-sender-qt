@@ -52,7 +52,12 @@ func main() {
 	myKeySaveButton := widgets.NewQPushButton2("Save", nil)
 	myKeyButtonWidget.Layout().AddWidget(myKeySaveButton)
 	myKeySaveButton.ConnectClicked(func(bool) {
-		fileName := widgets.QFileDialog_GetSaveFileName(nil, "Save Keypair As", core.QDir_HomePath(), "", "", 0)
+		emptyBytes := make([]byte, 32)
+		if bytes.Equal(myKP.Public[:], emptyBytes) {
+			widgets.QMessageBox_Warning(nil, "No Public Key", "Please generate a keypair before saving", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+			return
+		}
+		fileName := widgets.QFileDialog_GetSaveFileName(nil, "Save Keypair As", core.QDir_HomePath(), "SecretSenderKey (*.ssk)", "", 0)
 		file, err := os.Create(fileName)
 		defer file.Close()
 		if err != nil {
@@ -75,7 +80,7 @@ func main() {
 	myKeyLoadButton := widgets.NewQPushButton2("Load", nil)
 	myKeyButtonWidget.Layout().AddWidget(myKeyLoadButton)
 	myKeyLoadButton.ConnectClicked(func(bool) {
-		fileName := widgets.QFileDialog_GetOpenFileName(nil, "Load Keypair", core.QDir_HomePath(), "", "", 0)
+		fileName := widgets.QFileDialog_GetOpenFileName(nil, "Load Keypair", core.QDir_HomePath(), "SecretSenderKey (*.ssk)", "", 0)
 		file, err := os.Open(fileName)
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Load Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
