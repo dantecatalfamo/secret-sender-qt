@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"strings"
 
@@ -50,6 +52,11 @@ func main() {
 
 	messageTextInput := widgets.NewQPlainTextEdit(nil)
 
+	messageStatusLabel := widgets.NewQLabel(nil, 0)
+	messageStatusLabel.Font().SetPointSize(10)
+	messageStatusLabel.SetWordWrap(true)
+	messageStatusLabel.SetHidden(true)
+
 	cryptWidget := widgets.NewQWidget(nil, 0)
 	cryptLayout := widgets.NewQHBoxLayout()
 	cryptLayout.Layout().SetContentsMargins(0, 0, 0, 0)
@@ -59,10 +66,11 @@ func main() {
 	cryptLayout.AddWidget(encryptButton, 0, 0)
 	cryptWidget.Layout().AddWidget(encryptButton)
 	encryptButton.ConnectClicked(func(bool) {
-		var txKP, tmpKP crypto.Keypair
-		err := tmpKP.Generate()
-		if err != nil {
-			widgets.QMessageBox_Critical(nil, "No Public Key", "Please enter the recipient's public key", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+		var txKP crypto.Keypair
+
+		emptyBytes := make([]byte, 32)
+		if bytes.Equal(rxKP.Public[:], emptyBytes) {
+			widgets.QMessageBox_Warning(nil, "No Public Key", "Please generate a keypair before encrypting a message", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
 
@@ -82,7 +90,7 @@ func main() {
 			txKP.Public[i] = b
 		}
 
-		encrypter := tmpKP.Encrypter(txKP.Public)
+		encrypter := rxKP.Encrypter(txKP.Public)
 		cypherText, err := encrypter.Encrypt([]byte(messageTextInput.ToPlainText()))
 		if err != nil {
 			widgets.QMessageBox_Warning(nil, "Encryption Error", err.Error(), widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
@@ -111,6 +119,12 @@ func main() {
 			return
 		}
 
+		pubKeyEncoded := strings.Split(messageTextInput.ToPlainText(), ":")[1]
+		pubKey, _ := base64.StdEncoding.DecodeString(pubKeyEncoded)
+		app.ProcessEvents(0)
+		messageStatusLabel.SetHidden(false)
+		messageStatusLabel.SetText(fmt.Sprintf("Encrypted by: %x", pubKey))
+
 		app.ProcessEvents(0)
 		messageTextInput.SetPlainText(string(decrypted))
 		app.ProcessEvents(0)
@@ -123,6 +137,7 @@ func main() {
 	mainWidget.Layout().AddWidget(txKeyInput)
 	mainWidget.Layout().AddWidget(messageTextLabel)
 	mainWidget.Layout().AddWidget(messageTextInput)
+	mainWidget.Layout().AddWidget(messageStatusLabel)
 	mainWidget.Layout().AddWidget(cryptWidget)
 
 	window.Show()
