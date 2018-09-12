@@ -25,20 +25,20 @@ func main() {
 	mainWidget.SetLayout(widgets.NewQVBoxLayout())
 	window.SetCentralWidget(mainWidget)
 
-	rxKeyLabel := widgets.NewQLabel2("Your Key:", nil, 0)
-	rxKeyLabel.Font().SetPointSize(11)
+	myKeyLabel := widgets.NewQLabel2("Your Key:", nil, 0)
+	myKeyLabel.Font().SetPointSize(11)
 
-	rxKeyInput := widgets.NewQLineEdit(nil)
-	rxKeyInput.SetPlaceholderText("Please generate a key")
-	rxKeyInput.SetReadOnly(true)
+	myKeyInput := widgets.NewQLineEdit(nil)
+	myKeyInput.SetPlaceholderText("Please generate a key")
+	myKeyInput.SetReadOnly(true)
 
-	rxKeyGenButton := widgets.NewQPushButton2("Generate", nil)
-	rxKeyGenButton.ConnectClicked(func(bool) {
-		rxKeyInput.SetText("Generating...")
+	myKeyGenButton := widgets.NewQPushButton2("Generate", nil)
+	myKeyGenButton.ConnectClicked(func(bool) {
+		myKeyInput.SetText("Generating...")
 		app.ProcessEvents(0)
 
 		myKP.Generate()
-		rxKeyInput.SetText(myKP.PublicString())
+		myKeyInput.SetText(myKP.PublicString())
 	})
 
 	txKeyLabel := widgets.NewQLabel2("Recipient Key:", nil, 0)
@@ -130,9 +130,9 @@ func main() {
 		app.ProcessEvents(0)
 	})
 
-	mainWidget.Layout().AddWidget(rxKeyLabel)
-	mainWidget.Layout().AddWidget(rxKeyInput)
-	mainWidget.Layout().AddWidget(rxKeyGenButton)
+	mainWidget.Layout().AddWidget(myKeyLabel)
+	mainWidget.Layout().AddWidget(myKeyInput)
+	mainWidget.Layout().AddWidget(myKeyGenButton)
 	mainWidget.Layout().AddWidget(txKeyLabel)
 	mainWidget.Layout().AddWidget(txKeyInput)
 	mainWidget.Layout().AddWidget(messageTextLabel)
