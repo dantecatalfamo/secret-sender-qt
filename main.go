@@ -208,7 +208,6 @@ func main() {
 	mainWidget.Layout().AddWidget(myKeyLabel)
 	mainWidget.Layout().AddWidget(myKeyInput)
 	mainWidget.Layout().AddWidget(myKeyButtonWidget)
-	//mainWidget.Layout().AddWidget(myKeyGenButton)
 	mainWidget.Layout().AddWidget(txKeyLabel)
 	mainWidget.Layout().AddWidget(txKeyInput)
 	mainWidget.Layout().AddWidget(messageTextLabel)
